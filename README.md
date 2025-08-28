@@ -1,4 +1,4 @@
-# AltaPay for CraftCMS Commerce
+# AltaPay for CraftCMS Commerce.
 
 Integrates your CraftCMS Commerce webshop to the AltaPay payments gateway.
 
