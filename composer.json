@@ -16,6 +16,11 @@
 		"gateway",
 		"integration"
 	],
+	"support": {
+		"email": "support@altapay.com",
+		"docs": "https://github.com/AltaPay/plugin-craftcommerce/wiki",
+		"issues": "https://github.com/AltaPay/plugin-craftcommerce/issues"
+	},
 	"license": "MIT",
 	"authors": [
 		{
