@@ -1,5 +1,5 @@
 {
-	"name": "quantity-digital/craftcms-altapay",
+	"name": "altapay/craftcms-altapay",
 	"description": "Altapay gateway integration for Craft Commerce 5",
 	"type": "craft-plugin",
 	"version": "5.0.0",
@@ -17,15 +17,15 @@
 		"integration"
 	],
 	"support": {
-		"email": "mail@quantity.dk",
-		"docs": "https://github.com/quantity-digital/craftcms-altapay/wiki",
-		"issues": "https://github.com/quantity-digital/craftcms-altapay/issues"
+		"email": "support@altapay.com",
+		"docs": "https://github.com/AltaPay/plugin-craftcommerce/wiki",
+		"issues": "https://github.com/AltaPay/plugin-craftcommerce/issues"
 	},
-	"license": "GNU",
+	"license": "MIT",
 	"authors": [
 		{
-			"name": "Quantity Digital A/S",
-			"homepage": "https://quantity.dk"
+			"name": "AltaPay A/S",
+            "homepage": "https://www.altapay.com/"
 		}
 	],
 	"require": {
