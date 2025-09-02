@@ -11,27 +11,39 @@ use QD\altapay\config\Settings;
 
 class Altapay extends Plugin
 {
+  use Routes;
+  use Events;
+
   public static $plugin;
   public string $schemaVersion = "5.0.0";
   public bool $hasCpSettings = true;
   public bool $hasCpSection = false;
-
-  use Routes;
-  use Events;
 
   public function init()
   {
     parent::init();
     Craft::setAlias('@QD/altapay', __DIR__);
 
+    self::$plugin = $this;
+
     $this->routes();
     $this->events();
 
-    self::$plugin = $this;
+
+    // echo '<pre>';
+    // print_r('Altapay: ' . $this->hasCpSettings);
+    // echo '</pre>';
+    // die;
   }
 
   protected function createSettingsModel(): ?Model
   {
+    // echo '<pre>';
+    // print_r($this->hasCpSettings);
+    // echo '</pre>';
+    // die;
+
+
     return new Settings();
   }
 

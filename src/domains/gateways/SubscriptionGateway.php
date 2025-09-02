@@ -38,7 +38,7 @@ class SubscriptionGateway extends Gateway
    */
   public static function displayName(): string
   {
-    return Craft::t('commerce', 'Altapay Subscription');
+    return Craft::t('commerce', 'AltaPay Subscription');
   }
 
   /**
