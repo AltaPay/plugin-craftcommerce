@@ -28,22 +28,10 @@ class Altapay extends Plugin
 
     $this->routes();
     $this->events();
-
-
-    // echo '<pre>';
-    // print_r('Altapay: ' . $this->hasCpSettings);
-    // echo '</pre>';
-    // die;
   }
 
   protected function createSettingsModel(): ?Model
   {
-    // echo '<pre>';
-    // print_r($this->hasCpSettings);
-    // echo '</pre>';
-    // die;
-
-
     return new Settings();
   }
 
