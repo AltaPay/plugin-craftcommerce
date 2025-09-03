@@ -5,26 +5,23 @@ namespace QD\altapay\domains\gateways;
 use Craft;
 use craft\commerce\base\Gateway;
 use craft\commerce\base\RequestResponseInterface;
+use craft\commerce\errors\NotImplementedException;
 use craft\commerce\models\payments\BasePaymentForm;
 use craft\commerce\models\Transaction;
-use craft\commerce\Plugin as Commerce;
 use QD\altapay\api\PaymentApi;
 use QD\altapay\config\Data;
 use QD\altapay\domains\payment\AuthorizeService;
-use QD\altapay\domains\payment\CaptureService;
-use QD\altapay\domains\payment\RefundService;
-
 
 class SubscriptionGateway extends Gateway
 {
   const SUPPORTS = [
     'Authorize' => true,
-    'Capture' => true,
+    'Capture' => false,
     'CompleteAuthorize' => false,
     'CompletePurchase' => false,
     'PaymentSources' => false,
     'Purchase' => true,
-    'Refund' => true,
+    'Refund' => false,
     'PartialRefund' => true,
     'Void' => true,
     'Webhooks' => false,
@@ -33,6 +30,9 @@ class SubscriptionGateway extends Gateway
   use GatewayTrait;
 
   //* Settings
+  public string $agreementName = '';
+  public string $agreementDescription = '';
+
   public string $statusToCapture = Data::NULL_STRING;
   public string $statusAfterCapture = Data::NULL_STRING;
   public string $terminal = '';
@@ -41,13 +41,12 @@ class SubscriptionGateway extends Gateway
 
   public static function displayName(): string
   {
-    return Craft::t('commerce', 'AltaPay Payment');
+    return Craft::t('commerce', 'AltaPay Subscription');
   }
 
   //* Authorize
   public function authorize(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
   {
-    //TODO: Update this to use the auth subscription
     $response = AuthorizeService::execute($transaction);
     return $response;
   }
@@ -55,17 +54,13 @@ class SubscriptionGateway extends Gateway
   //* Capture
   public function capture(Transaction $transaction, string $reference): RequestResponseInterface
   {
-    //TODO: Update to use capture recurring function
-    $response = CaptureService::execute($reference);
-    return $response;
+    throw new NotImplementedException('Should be handled programatically by calling RecurringService::charge()');
   }
 
   //* Refund
   public function refund(Transaction $transaction): RequestResponseInterface
   {
-    //TODO: Update to use refund recurring function
-    $response = RefundService::execute($transaction);
-    return $response;
+    throw new NotImplementedException('Currently not supported, refund through dashboard');
   }
 
   //* Settings
@@ -85,15 +80,14 @@ class SubscriptionGateway extends Gateway
       $terminals[] = ['value' => $terminal->Title, 'label' => $terminal->Title];
     }
 
-    //* Status
-    // $statuses[] = ['value' => Data::NULL_STRING, 'label' => 'None'];
-    // foreach (Commerce::getInstance()->getOrderStatuses()->getAllOrderStatuses() as $status) {
-    //   $statuses[] = ['value' => $status->handle, 'label' => $status->displayName];
-    // }
+    //TODO: Add GUI for editing agreement settings
 
     $options = [
-      // 'statuses' => $statuses,
       'terminals' => $terminals,
+      'agreement' => (object)[
+        'name' => $this->agreementName ?? '',
+        'description' => $this->agreementDescription ?? '',
+      ],
     ];
 
     return Craft::$app->getView()->renderTemplate('craftcms-altapay/gateways/subscription', ['gateway' => $this, 'options' => $options]);

@@ -1,0 +1,27 @@
+{% from "_includes/forms" import textField  %}
+<h2>Agreement</h2>
+<div class="flex-fields">
+  <div class="field width-50">
+			{{ textField({
+				label: 'Name'|t('commerce-quickpay'),
+				instructions: 'Name for the subscription agreement'|t('commerce-quickpay'),
+				id: 'agreementName',
+				name: 'agreementName',
+				value : gateway.agreement.name ?? '',
+				errors: gateway.getErrors('agreementName') ?? null,
+        required: true,
+			}) }}
+  </div>
+  <div class="field width-50">
+			{{ textField({
+				label: 'Description'|t('commerce-quickpay'),
+				instructions: 'Description for the subscription agreement'|t('commerce-quickpay'),
+				id: 'agreementDescription',
+				name: 'agreementDescription',
+				value : gateway.agreement.description ?? '',
+				errors: gateway.getErrors('agreementDescription') ?? null,
+        required: true,
+			}) }}
+  </div>
+</div>
+<hr/>

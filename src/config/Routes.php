@@ -24,6 +24,9 @@ trait Routes
       $event->rules['callback/v1/altapay/payment/fail'] = 'craftcms-altapay/payment-callback/fail';
       $event->rules['callback/v1/altapay/payment/open'] = 'craftcms-altapay/payment-callback/open';
       $event->rules['callback/v1/altapay/payment/notification'] = 'craftcms-altapay/payment-callback/notification';
+
+      $event->rules['callback/v1/altapay/recurring/ok'] = 'craftcms-altapay/recurring-callback/ok';
+      $event->rules['callback/v1/altapay/recurring/fail'] = 'craftcms-altapay/recurring-callback/fail';
     });
   }
 

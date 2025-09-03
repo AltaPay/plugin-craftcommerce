@@ -11,7 +11,11 @@ use QD\altapay\config\Utils;
 use craft\db\Query;
 use Throwable;
 use craft\commerce\db\Table;
+use QD\altapay\Altapay;
 use QD\altapay\config\Data;
+use QD\altapay\domains\gateways\SubscriptionGateway;
+use QD\altapay\hooks\SubscriptionAgreementHook;
+use QD\altapay\services\OrderService;
 
 class AuthorizeService
 {
@@ -44,15 +48,14 @@ class AuthorizeService
       'language' => explode('-', $site->language)[0],
 
       // optional
+      'type' => Data::PAYMENT_REQUEST_TYPE_PAYMENT,
       'transaction_info' => [
         'store' => $order->storeId ?? '',
         'order' => $order->id ?? '',
+        'number' => $order->number ?? '',
         'transaction' => $transaction->hash ?? '',
       ],
-
-      // General
-      'type' => Data::PAYMENT_REQUEST_TYPE_PAYMENT,
-      // 'sale_reconciliation_identifier' => '',
+      'sale_reconciliation_identifier' => $order->number ?? '',
       // 'credit_card_token' => '',
       'fraud_service' => 'none',
       // 'cookie' => '',
@@ -66,13 +69,14 @@ class AuthorizeService
 
     $payload['customer_info'] = self::_customer($order);
     $payload['config'] = self::_config($site->baseUrl);
-    $payload['orderLines'] = self::_lines($order);
+    $payload['orderLines'] = OrderService::lines($order);
+    self::_subscription($payload, $gateway);
 
     $response = PaymentApi::createPaymentRequest($payload);
     return new PaymentResponse($response);
   }
 
-  //* Payload
+  //* PRIVATE
   private static function _customer(Order $order): array
   {
     $customer = $order->getCustomer();
@@ -128,88 +132,6 @@ class AuthorizeService
     return $info;
   }
 
-  private static function _lines(Order $order): array
-  {
-    $lines = [];
-
-    // Items
-    $items = $order->getLineItems();
-    if (!$items) return $lines;
-
-    foreach ($items as $item) {
-      $purchasable = $item->getPurchasable();
-      if (!$purchasable) continue;
-
-      //TODO: Allow setting the field in altapay settings
-      $image = $purchasable->image ?? $purchasable->images ?? $purchasable->variantImages ?? null;
-
-      $unitPrice = $item->taxIncluded ? $item->price - $item->taxIncluded : $item->price;
-      $taxAmount = $item->taxIncluded ? $item->taxIncluded : 0.00;
-
-      $lines[] = [
-        'description' => $item->description ?: '',
-        'itemId' => $purchasable->sku ?: '',
-        'quantity' => $item->qty ?: 1,
-
-        'unitPrice' => Utils::amount($unitPrice),
-        'taxAmount' => Utils::amount($taxAmount),
-        'discount' => Utils::amount(self::_discount($item->subtotal, $item->total)),
-        'goodsType' => 'item', // TODO: Handle giftvouchers?
-        'imageUrl' => $image ? Craft::$app->getAssets()->getAssetUrl($image->eagerly()->one()) : '',
-        'productUrl' => $purchasable->url ?: '',
-      ];
-    }
-
-    // Adjustments
-    $adjustments = $order->getAdjustments();
-    foreach ($adjustments as $adjustment) {
-      if ($adjustment->lineItemId) continue;
-      if ($adjustment->type === 'shipping') continue;
-      if ($adjustment->type === 'tax') continue;
-
-      switch ($adjustment->type) {
-        case 'discount':
-          $type = 'discount';
-          break;
-        default:
-          $type = 'item';
-          break;
-      }
-
-      $lines[] = [
-        'description' => $adjustment->name ?: 'Adjustment',
-        'itemId' => strtolower(str_replace(' ', '-', $adjustment->name ?: 'adjustment')),
-        'quantity' => 1,
-
-        'unitPrice' => Utils::amount($adjustment->amount),
-        'taxAmount' => Utils::amount(0.00),
-        'discount' => 0.00,
-        'goodsType' => $type,
-        'imageUrl' => '',
-        'productUrl' => '',
-      ];
-    }
-
-    // Shipping
-    $shipping = $order->totalShippingCost ?: null;
-    if ($shipping) {
-      $lines[] = [
-        'description' => $order->shippingMethodName ?: 'Shipping',
-        'itemId' => $order->shippingMethodHandle ?: 'shipping',
-        'quantity' => 1,
-
-        'unitPrice' => Utils::amount($shipping),
-        'taxAmount' => Utils::amount(0.00),
-        'discount' => 0.00,
-        'goodsType' => 'shipment',
-        'imageUrl' => '',
-        'productUrl' => '',
-      ];
-    }
-
-    return $lines;
-  }
-
   private static function _config($url): array
   {
     return [
@@ -220,11 +142,9 @@ class AuthorizeService
     ];
   }
 
-  //* PRIVATE
   private static function _reference(Order &$order): Order
   {
     if ($order->reference) return $order;
-
 
     $referenceTemplate = $order->getStore()->getOrderReferenceFormat();
     try {
@@ -261,13 +181,43 @@ class AuthorizeService
     return $order;
   }
 
-  private static function _discount($subtotal, $total): float
+  private static function _subscription(&$payload, $gateway)
   {
-    if ($subtotal <= 0) return 0;
-    if ($subtotal === $total) return 0;
-    if ($total <= 0) return 100;
+    // Use default payment settings if order is not a subscription
+    if (!$gateway instanceof SubscriptionGateway) return;
 
-    $discount = (($subtotal - $total) / $subtotal) * 100;
-    return (float) $discount ?? 0.00;
+    // Set subscription data
+    $payload['type'] = Data::PAYMENT_REQUEST_TYPE_SUBSCRIPTION;
+
+    // HOOK
+    //? This hook allows other developers to modify the subscription agreement data
+    $plugin = Altapay::getInstance();
+    $hook = new SubscriptionAgreementHook([
+      'payload' => $payload,
+      'gateway' => $gateway,
+      'agreement' => [
+        'type' => Data::AGREEMENT_TYPE_UNSCHEDULED,
+      ],
+    ]);
+
+    $plugin->trigger(Altapay::HOOK_SUBSCRIPTION_AGREEMENT, $hook);
+    $payload['agreement'] = $hook->agreement;
+
+    // Handle unscheduled
+    //? In case the subscription is unscheduled, this method is only used for authorization
+    //? so we leave amount and items empty, as they will be a part of the individual charges
+    $isUnscheduled = ($hook->agreement['type'] ?? '') === Data::AGREEMENT_TYPE_UNSCHEDULED;
+    if ($isUnscheduled) {
+      $payload['amount'] = Utils::amount(0);
+      $payload['orderLines'] = [
+        [
+          'goodsType' => 'subscription_model',
+          'itemId' => $gateway->agreementName ?? 'Subscription',
+          'description' => $gateway->agreementDescription ?? 'Service',
+          'quantity' => 1,
+          'unitPrice' => Utils::amount(0),
+        ]
+      ];
+    }
   }
 }
