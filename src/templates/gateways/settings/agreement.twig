@@ -7,7 +7,7 @@
 				instructions: 'Name for the subscription agreement'|t('commerce-quickpay'),
 				id: 'agreementName',
 				name: 'agreementName',
-				value : gateway.agreement.name ?? '',
+				value : gateway.agreementName ?? '',
 				errors: gateway.getErrors('agreementName') ?? null,
         required: true,
 			}) }}
@@ -18,7 +18,7 @@
 				instructions: 'Description for the subscription agreement'|t('commerce-quickpay'),
 				id: 'agreementDescription',
 				name: 'agreementDescription',
-				value : gateway.agreement.description ?? '',
+				value : gateway.agreementDescription ?? '',
 				errors: gateway.getErrors('agreementDescription') ?? null,
         required: true,
 			}) }}

@@ -84,10 +84,6 @@ class SubscriptionGateway extends Gateway
 
     $options = [
       'terminals' => $terminals,
-      'agreement' => (object)[
-        'name' => $this->agreementName ?? '',
-        'description' => $this->agreementDescription ?? '',
-      ],
     ];
 
     return Craft::$app->getView()->renderTemplate('craftcms-altapay/gateways/subscription', ['gateway' => $this, 'options' => $options]);
