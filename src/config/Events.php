@@ -32,7 +32,7 @@ trait Events
       Gateways::EVENT_REGISTER_GATEWAY_TYPES,
       function (RegisterComponentTypesEvent $event) {
         $event->types[] = PaymentGateway::class;
-        // $event->types[] = SubscriptionGateway::class;
+        $event->types[] = SubscriptionGateway::class;
       }
     );
 

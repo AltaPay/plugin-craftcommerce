@@ -186,11 +186,11 @@ class Api
 
   private static function _message($array)
   {
-    $header = $array['Header']['ErrorMessage'] ?? null;
-    if ($header) return implode(', ', $header);
+    $header = $array['Header']['ErrorMessage'] ?? [];
+    if ($header) return Utils::stringify($header);
 
     $merchant = $array['Body']['MerchantErrorMessage'] ?? null;
-    if ($merchant) return $merchant;
+    if ($merchant) return Utils::stringify($merchant);
 
     return 'Unknown';
   }

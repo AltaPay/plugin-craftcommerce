@@ -5,24 +5,65 @@ namespace QD\altapay\domains\gateways;
 use Craft;
 use craft\commerce\base\Gateway;
 use craft\commerce\base\RequestResponseInterface;
-use craft\commerce\elements\Order;
 use craft\commerce\errors\NotImplementedException;
 use craft\commerce\models\payments\BasePaymentForm;
-use craft\commerce\models\payments\OffsitePaymentForm;
-use craft\commerce\models\PaymentSource;
-use craft\commerce\models\responses\Manual as ManualRequestResponse;
 use craft\commerce\models\Transaction;
-use craft\helpers\App;
-use craft\web\Response as WebResponse;
-
+use QD\altapay\api\PaymentApi;
+use QD\altapay\config\Data;
+use QD\altapay\domains\payment\AuthorizeService;
 
 class SubscriptionGateway extends Gateway
 {
-  /**
-   * @var bool
-   */
+  const SUPPORTS = [
+    'Authorize' => true,
+    'Capture' => false,
+    'CompleteAuthorize' => false,
+    'CompletePurchase' => false,
+    'PaymentSources' => false,
+    'Purchase' => true,
+    'Refund' => false,
+    'PartialRefund' => true,
+    'Void' => true,
+    'Webhooks' => false,
+  ];
+
+  use GatewayTrait;
+
+  //* Settings
+  public string $agreementName = '';
+  public string $agreementDescription = '';
+
+  public string $statusToCapture = Data::NULL_STRING;
+  public string $statusAfterCapture = Data::NULL_STRING;
+  public string $terminal = '';
+
   private string|bool $_onlyAllowForZeroPriceOrders = false;
 
+  public static function displayName(): string
+  {
+    return Craft::t('commerce', 'AltaPay Subscription');
+  }
+
+  //* Authorize
+  public function authorize(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
+  {
+    $response = AuthorizeService::execute($transaction);
+    return $response;
+  }
+
+  //* Capture
+  public function capture(Transaction $transaction, string $reference): RequestResponseInterface
+  {
+    throw new NotImplementedException('Should be handled programatically by calling RecurringService::charge()');
+  }
+
+  //* Refund
+  public function refund(Transaction $transaction): RequestResponseInterface
+  {
+    throw new NotImplementedException('Currently not supported, refund through dashboard');
+  }
+
+  //* Settings
   public function getSettings(): array
   {
     $settings = parent::getSettings();
@@ -31,223 +72,20 @@ class SubscriptionGateway extends Gateway
     return $settings;
   }
 
-  /**
-   * Returns the display name of this class.
-   *
-   * @return string The display name of this class.
-   */
-  public static function displayName(): string
-  {
-    return Craft::t('commerce', 'Altapay Subscription');
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function getPaymentFormHtml(array $params): ?string
-  {
-    return '';
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function getPaymentFormModel(): BasePaymentForm
-  {
-    return new OffsitePaymentForm();
-  }
-
-  /**
-   * @inheritdoc
-   */
   public function getSettingsHtml(): ?string
   {
-    return Craft::$app->getView()->renderTemplate('commerce/gateways/manualGatewaySettings', ['gateway' => $this]);
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function authorize(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
-  {
-    return new ManualRequestResponse();
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function capture(Transaction $transaction, string $reference): RequestResponseInterface
-  {
-    return new ManualRequestResponse();
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function completeAuthorize(Transaction $transaction): RequestResponseInterface
-  {
-    throw new NotImplementedException(Craft::t('commerce', 'This gateway does not support that functionality.'));
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function completePurchase(Transaction $transaction): RequestResponseInterface
-  {
-    throw new NotImplementedException(Craft::t('commerce', 'This gateway does not support that functionality.'));
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function createPaymentSource(BasePaymentForm $sourceData, int $customerId): PaymentSource
-  {
-    throw new NotImplementedException(Craft::t('commerce', 'This gateway does not support that functionality.'));
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function deletePaymentSource(string $token): bool
-  {
-    throw new NotImplementedException(Craft::t('commerce', 'This gateway does not support that functionality.'));
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function getPaymentTypeOptions(): array
-  {
-    return [
-      'authorize' => Craft::t('commerce', 'Authorize Only (Manually Capture)'),
-    ];
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function purchase(Transaction $transaction, BasePaymentForm $form): RequestResponseInterface
-  {
-    throw new NotImplementedException(Craft::t('commerce', 'This gateway does not support that functionality.'));
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function processWebHook(): WebResponse
-  {
-    throw new NotImplementedException(Craft::t('commerce', 'This gateway does not support that functionality.'));
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function refund(Transaction $transaction): RequestResponseInterface
-  {
-    return new ManualRequestResponse();
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function supportsAuthorize(): bool
-  {
-    return true;
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function supportsCapture(): bool
-  {
-    return true;
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function supportsCompleteAuthorize(): bool
-  {
-    return false;
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function supportsCompletePurchase(): bool
-  {
-    return false;
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function supportsPaymentSources(): bool
-  {
-    return false;
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function supportsPurchase(): bool
-  {
-    return false;
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function supportsRefund(): bool
-  {
-    return true;
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function supportsPartialRefund(): bool
-  {
-    return true;
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function supportsWebhooks(): bool
-  {
-    return false;
-  }
-
-  /**
-   * @inheritdoc
-   */
-  public function availableForUseWithOrder(Order $order): bool
-  {
-    if ($this->getOnlyAllowForZeroPriceOrders() && $order->getTotalPrice() != 0) {
-      return false;
+    //* Terminal
+    $terminals[] = ['value' => Data::NULL_STRING, 'label' => 'None'];
+    foreach (PaymentApi::getTerminals() as $terminal) {
+      $terminals[] = ['value' => $terminal->Title, 'label' => $terminal->Title];
     }
 
-    return parent::availableForUseWithOrder($order);
-  }
+    //TODO: Add GUI for editing agreement settings
 
-  /**
-   * @param bool $parse
-   * @return bool|string
-   * @since 4.1.1
-   */
-  public function getOnlyAllowForZeroPriceOrders(bool $parse = true): bool|string
-  {
-    return $parse ? App::parseBooleanEnv($this->_onlyAllowForZeroPriceOrders) : $this->_onlyAllowForZeroPriceOrders;
-  }
+    $options = [
+      'terminals' => $terminals,
+    ];
 
-  /**
-   * @param bool|string $onlyAllowForZeroPriceOrders
-   * @return void
-   * @since 4.1.1
-   */
-  public function setOnlyAllowForZeroPriceOrders(bool|string $onlyAllowForZeroPriceOrders): void
-  {
-    $this->_onlyAllowForZeroPriceOrders = $onlyAllowForZeroPriceOrders;
+    return Craft::$app->getView()->renderTemplate('craftcms-altapay/gateways/subscription', ['gateway' => $this, 'options' => $options]);
   }
 }

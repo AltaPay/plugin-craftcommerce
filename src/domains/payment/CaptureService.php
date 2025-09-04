@@ -5,6 +5,7 @@ namespace QD\altapay\domains\payment;
 use Exception;
 use QD\altapay\api\PaymentApi;
 use QD\altapay\config\Utils;
+use QD\altapay\services\OrderService;
 use QD\altapay\services\TransactionService;
 
 class CaptureService
@@ -30,8 +31,8 @@ class CaptureService
 
     $payload = [
       'amount' => Utils::amount($amount),
-      // 'orderLines' = [],
-      // 'reconciliation_identifier' => '',
+      'orderLines' => OrderService::lines($order),
+      'reconciliation_identifier' => $order->number ?? '',
       // 'sales_tax' => 0,
       'transaction_id' => $reference
     ];

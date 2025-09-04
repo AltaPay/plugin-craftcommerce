@@ -4,17 +4,18 @@ namespace QD\altapay\api;
 
 class SubscriptionApi extends Api
 {
-  public static function chargeSubscription()
+  public function __construct()
   {
-    return 'Not implemented';
+    parent::__construct();
   }
-  public static function reserveSubscriptionCharge()
+
+  public static function chargeSubscription(array $payload): ApiResponse
   {
-    return 'Not implemented';
-  }
-  public static function createSubscription(array $payload, $type = 'subscription')
-  {
-    $payload['type'] = $type;
-    return PaymentApi::createPaymentRequest($payload);
+    $response = (new Api())
+      ->setMethod('chargeSubscription')
+      ->setPayload($payload)
+      ->post();
+
+    return $response;
   }
 }
