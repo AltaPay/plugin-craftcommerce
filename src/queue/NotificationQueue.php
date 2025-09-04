@@ -27,6 +27,6 @@ class NotificationQueue extends BaseJob
 
   protected function defaultDescription(): string
   {
-    return 'Altapay: Notification';
+    return 'AltaPay: Notification';
   }
 }
