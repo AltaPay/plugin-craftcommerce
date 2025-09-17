@@ -3,6 +3,7 @@
 namespace QD\altapay\domains\subscription;
 
 use Craft;
+use craft\commerce\elements\Order;
 use Exception;
 use QD\altapay\api\ApiResponse;
 use QD\altapay\api\SubscriptionApi;
@@ -17,7 +18,7 @@ use QD\altapay\services\OrderService;
 
 class RecurringService
 {
-  public static function charge($id, $order): ApiResponse
+  public static function charge(mixed $id, Order $order): ApiResponse
   {
     if (!$order) throw new Exception("Order not found", 1);
     if (!$id) throw new Exception("Subscription not found", 1);
