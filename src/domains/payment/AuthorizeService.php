@@ -215,7 +215,7 @@ class AuthorizeService
           'itemId' => $gateway->agreementName ?? 'Subscription',
           'description' => $gateway->agreementDescription ?? 'Service',
           'quantity' => 1,
-          'unitPrice' => Utils::amount(0),
+          'unitPrice' => Utils::amount(1),
         ]
       ];
     }
