@@ -4,6 +4,16 @@ namespace QD\altapay\config;
 
 class Utils
 {
+  public static function stringify($data): string
+  {
+    if (is_string($data)) return $data;
+    if (is_array($data)) return json_encode($data);
+    if (is_object($data)) return json_encode($data);
+
+    return '';
+  }
+
+
   public static function objectify($data): object|array|string
   {
     if (is_object($data)) {

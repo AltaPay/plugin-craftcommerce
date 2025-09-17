@@ -1,6 +1,6 @@
 {
 	"name": "altapay/craftcms-altapay",
-	"description": "Altapay gateway integration for Craft Commerce 5",
+	"description": "AltaPay gateway integration for Craft Commerce 5",
 	"type": "craft-plugin",
 	"version": "5.0.0",
 	"keywords": [
@@ -25,7 +25,7 @@
 	"authors": [
 		{
 			"name": "AltaPay A/S",
-            "homepage": "https://www.altapay.com/"
+			"homepage": "https://www.altapay.com/"
 		}
 	],
 	"require": {
@@ -39,10 +39,8 @@
 		}
 	},
 	"extra": {
-		"name": "Altapay for Craft Commerce",
+		"name": "Altapay",
 		"handle": "craftcms-altapay",
-		"class": "QD\\altapay\\Altapay",
-		"hasCpSettings": false,
-		"hasCpSection": false
+		"class": "QD\\altapay\\Altapay"
 	}
 }

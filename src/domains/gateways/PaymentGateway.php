@@ -40,7 +40,7 @@ class PaymentGateway extends Gateway
 
   public static function displayName(): string
   {
-    return Craft::t('commerce', 'Altapay Payment');
+    return Craft::t('commerce', 'AltaPay Payment');
   }
 
   //* Authorize

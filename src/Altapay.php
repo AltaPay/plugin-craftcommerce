@@ -11,23 +11,35 @@ use QD\altapay\config\Settings;
 
 class Altapay extends Plugin
 {
+  // Use
+  use Routes;
+  use Events;
+
+  // Settings
   public static $plugin;
   public string $schemaVersion = "5.0.0";
   public bool $hasCpSettings = true;
   public bool $hasCpSection = false;
 
-  use Routes;
-  use Events;
+  // Hooks
+  const HOOK_SUBSCRIPTION_AGREEMENT = 'beforeSubscriptionAgreement';
+  const HOOK_RECURRING_CHARGE = 'beforeRecurringCharge';
+
+  // Events
+  const EVENT_RECURRING_CHARGE = 'afterRecurringCharge';
+  const EVENT_SUBSCRIPTION_CREATED = 'afterSubscriptionCreated';
+  const EVENT_PAYMENT_AUTHORIZATION = 'afterPaymentAuthorization';
+  const EVENT_PAYMENT_CAPTURE = 'afterPaymentCapture';
 
   public function init()
   {
     parent::init();
     Craft::setAlias('@QD/altapay', __DIR__);
 
+    self::$plugin = $this;
+
     $this->routes();
     $this->events();
-
-    self::$plugin = $this;
   }
 
   protected function createSettingsModel(): ?Model
